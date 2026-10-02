@@ -49,3 +49,7 @@ Resposta esperada: HTTP 200 com o corpo:
 go test ./...
 go vet ./...
 ```
+
+## Documentação
+
+- [Regras de domínio e métricas](docs/domain-rules.md)
