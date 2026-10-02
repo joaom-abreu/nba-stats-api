@@ -73,7 +73,7 @@ func TestHealthEndpoints(t *testing.T) {
 			handler := httpapi.NewHandler(func(ctx context.Context) error {
 				calls++
 				return tt.databaseErr
-			})
+			}, emptyTeamList)
 
 			request := httptest.NewRequest(tt.method, tt.path, nil)
 			recorder := httptest.NewRecorder()
@@ -125,7 +125,7 @@ func TestHealthReadyUsesRequestContext(t *testing.T) {
 		_, hasDeadline = ctx.Deadline()
 		databaseErr = ctx.Err()
 		return databaseErr
-	})
+	}, emptyTeamList)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()

@@ -52,9 +52,11 @@ func run() error {
 
 	slog.Info("connected to PostgreSQL")
 
+	teamRepository := postgres.NewTeamRepository(pool)
+
 	server := &http.Server{
 		Addr:              ":8080",
-		Handler:           httpapi.NewHandler(pool.Ping),
+		Handler:           httpapi.NewHandler(pool.Ping, teamRepository.List),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

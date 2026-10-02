@@ -2,13 +2,17 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
-	"log/slog"
+	"crypto/rand"
 	"net/http"
 	"time"
+
+	"nba-stats-api/internal/domain"
 )
 
-func NewHandler(pingDatabase func(context.Context) error) http.Handler {
+func NewHandler(
+	pingDatabase func(context.Context) error,
+	listTeams func(context.Context, domain.TeamFilter) ([]domain.Team, error),
+) http.Handler {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /health/live", healthLive)
@@ -25,7 +29,42 @@ func NewHandler(pingDatabase func(context.Context) error) http.Handler {
 		writeHealth(w, http.StatusOK, "ok")
 	})
 
-	return mux
+	mux.HandleFunc("GET /v1/teams", listTeamsHandler(listTeams))
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet && r.Method != http.MethodHead {
+			probe := r.Clone(r.Context())
+			probe.Method = http.MethodGet
+
+			_, pattern := mux.Handler(probe)
+
+			if pattern != "" && pattern != "/" {
+				w.Header().Set("Allow", "GET, HEAD")
+				writeError(
+					w, r,
+					http.StatusMethodNotAllowed,
+					"method_not_allowed",
+					"method not allowed",
+				)
+				return
+			}
+		}
+
+		writeError(
+			w, r,
+			http.StatusNotFound,
+			"not_found",
+			"route not found",
+		)
+	})
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		id := rand.Text()
+		w.Header().Set("X-Request-ID", id)
+
+		ctx := context.WithValue(r.Context(), requestIDKey{}, id)
+		mux.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func healthLive(w http.ResponseWriter, r *http.Request) {
@@ -33,9 +72,7 @@ func healthLive(w http.ResponseWriter, r *http.Request) {
 }
 
 func writeHealth(w http.ResponseWriter, statusCode int, status string) {
-	w.Header().Set("Content-Type", "application/json")
 	w.Header().Set("Cache-Control", "no-store")
-	w.WriteHeader(statusCode)
 
 	response := struct {
 		Status string `json:"status"`
@@ -43,7 +80,5 @@ func writeHealth(w http.ResponseWriter, statusCode int, status string) {
 		Status: status,
 	}
 
-	if err := json.NewEncoder(w).Encode(response); err != nil {
-		slog.Error("failed to write health response", "error", err)
-	}
+	writeJSON(w, statusCode, response)
 }
