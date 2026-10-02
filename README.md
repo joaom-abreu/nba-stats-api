@@ -1,134 +1,158 @@
 # NBA Stats API
 
-API de estatísticas de times e jogos da NBA, desenvolvida em Go.
+Projeto de estudo para praticar Go, SQL e Docker criando uma API de estatísticas da NBA.
 
-## Escopo
+## Tecnologias
 
-- Listagem de times e jogos com filtros e paginação.
-- Resumo de desempenho por temporada e fase.
-- Análise de jogos recentes e desempenho em casa e fora.
-- Importação de dados com controle de progresso e retomada.
-- Dados sintéticos para demonstração sem chave externa.
+- Go
+- PostgreSQL
+- Docker Compose
+- pgxpool para conexão com o banco
+- Goose para migrações
 
-O recorte inicial de dados reais será a temporada iniciada em 2024,
-com a fase explicitada nas importações e consultas.
-
-## Estado atual
-
-Servidor HTTP com endpoint de saúde, validação de partidas e testes automatizados.
 ## Requisitos
 
-Go na versão indicada em `go.mod` ou superior.
+- Go 1.25 ou superior.
+- Docker com Docker Compose disponível.
 
-## Executar
+Execute os comandos abaixo na raiz do projeto.
 
-Na raiz do projeto:
+## Configuração
 
-```bash
-go run ./cmd/api
-```
-
-A API escuta na porta 8080.
-
-Em outro terminal:
-
-```bash
-curl -i http://localhost:8080/health/live
-```
-
-Resposta esperada: HTTP 200 com o corpo:
-
-```json
-{"status":"ok"}
-```
-
-## Verificar
-
-```bash
-go test ./...
-go vet ./...
-```
-
-## Documentação
-
-- [Regras do projeto](docs/domain-rules.md)
-- [Como a API vai funcionar](docs/api-contract.md)
-
-## Banco de dados
-
-Requer Docker com Docker Compose.
-
-Na primeira execução, crie a configuração local:
+Na primeira execução, copie o arquivo de exemplo:
 
 ```bash
 cp .env.example .env
 ```
 
-Para iniciar o PostgreSQL:
+Se o `.env` já existir, use o arquivo atual e confira se ele contém `DATABASE_URL`.
+
+A API lê o `.env` ao iniciar. As configurações principais são:
+
+- `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` e `POSTGRES_PORT`: configuração do banco no Docker.
+- `DATABASE_URL`: conexão usada pela aplicação Go.
+- `GOOSE_DBSTRING`: conexão usada pelas migrações.
+
+Se alterar usuário, senha, banco ou porta, ajuste também as duas URLs de conexão.
+
+Baixe as dependências do projeto:
+
+```bash
+go mod download
+```
+
+## Banco de dados
+
+Suba o PostgreSQL:
 
 ```bash
 docker compose up -d --wait
 ```
 
-O banco fica disponível em `127.0.0.1:5432`.
-As configurações estão no `.env`.
-
-Para abrir o terminal SQL:
-
-```bash
-docker compose exec db psql -U nba -d nba_stats
-```
-
-Use `\q` para sair.
-
-Para parar os containers mantendo os dados:
-
-```bash
-docker compose down
-```
-
-## Migrações
-
-Usamos Goose para acompanhar as mudanças do banco.
-
-Instale a ferramenta na raiz do projeto:
+Instale o Goose na pasta `bin`:
 
 ```bash
 mkdir -p bin
 GOBIN="$PWD/bin" go install github.com/pressly/goose/v3/cmd/goose@v3.27.3
 ```
 
-Com o banco iniciado e o `.env` configurado, aplique as migrações:
+Aplique as migrações e confira o status:
 
 ```bash
 ./bin/goose up
-```
-
-Para conferir quais foram aplicadas:
-
-```bash
 ./bin/goose status
 ```
 
+Para abrir o terminal do PostgreSQL com a configuração padrão:
+
+```bash
+docker compose exec db psql -X -U nba -d nba_stats
+```
+
+Use `\q` para sair. Se personalizou o usuário ou o nome do banco, ajuste os comandos `psql` deste README.
+
 ## Dados de demonstração
 
-A demonstração usa quatro times fictícios e cinco jogos.
+Os dados são fictícios e não precisam de chave de API. Eles usam a origem `demo`, a temporada `2024` e a fase `regular_season`.
 
-Com o banco iniciado e as migrações aplicadas, carregue os dados:
+Carregue os dados:
 
 ```bash
 docker compose exec -T db psql -X -U nba -d nba_stats \
   -v ON_ERROR_STOP=1 < testdata/demo.sql
 ```
 
-A carga pode ser repetida sem duplicar os registros.
+O comando pode ser repetido: ele atualiza os registros existentes, sem duplicar times ou partidas.
 
-Para conferir as quantidades e os resultados do time A:
+Confira os resultados:
 
 ```bash
 docker compose exec -T db psql -X -U nba -d nba_stats \
   -v ON_ERROR_STOP=1 < testdata/check_demo.sql
 ```
 
-São esperados quatro times, cinco jogos e, para o time A,
-três jogos encerrados, duas vitórias e uma derrota.
+O resultado esperado é de **4 times e 5 partidas**. Para o time A, considerando somente partidas finalizadas:
+
+| Estatística | Resultado |
+| --- | --- |
+| Partidas | 3 |
+| Vitórias | 2 |
+| Derrotas | 1 |
+| Média de pontos feitos | 100,00 |
+| Média de pontos sofridos | 100,00 |
+
+## Executar a API
+
+Com o banco ligado e o `.env` configurado:
+
+```bash
+go run ./cmd/api
+```
+
+A aplicação verifica a conexão com o PostgreSQL antes de iniciar o servidor. Se a conexão falhar, ela mostra um erro e encerra.
+
+Em outro terminal, consulte:
+
+```bash
+curl -i http://localhost:8080/health/live
+```
+
+A resposta deve ter status `200` e este corpo:
+
+```json
+{"status":"ok"}
+```
+
+Esse endpoint indica que o servidor está respondendo. A conexão com o banco é verificada na inicialização; a verificação pelo endpoint `/health/ready` será implementada depois.
+
+Para encerrar a API, pressione `Ctrl+C`.
+
+## Testes
+
+Execute os testes e a análise do código:
+
+```bash
+go test ./...
+go vet ./...
+```
+
+Para testar a conexão com o PostgreSQL, deixe o banco ligado e execute:
+
+```bash
+go test -tags=integration ./internal/postgres
+```
+
+O teste usa `DATABASE_URL` do `.env`. Também é possível definir `TEST_DATABASE_URL` no ambiente para escolher outro banco.
+
+## Parar o banco
+
+```bash
+docker compose down
+```
+
+Os dados permanecem no volume do Docker e estarão disponíveis quando o banco subir novamente.
+
+## Documentação
+
+- [Regras do projeto](docs/domain-rules.md)
+- [Como a API vai funcionar](docs/api-contract.md)
