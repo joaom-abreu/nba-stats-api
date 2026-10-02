@@ -71,8 +71,10 @@ Se houver apenas 3 jogos, as médias usam esses 3.
 
 Dados fictícios do time A, na temporada 2024 e fase regular.
 Os placares abaixo estão do ponto de vista de A.
+Os números 101 a 105 são IDs externos da demonstração.
+Os IDs locais são gerados pelo banco.
 
-| ID | Data | Local | Placar de A | Estado |
+| ID  externo| Data | Local | Placar de A | Estado |
 |---|---|---|---|---|
 | 101 | 2025-01-02 | Casa | 110–100 | Encerrado |
 | 102 | 2025-01-04 | Fora | 90–105 | Encerrado |

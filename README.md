@@ -109,3 +109,26 @@ Para conferir quais foram aplicadas:
 ```bash
 ./bin/goose status
 ```
+
+## Dados de demonstração
+
+A demonstração usa quatro times fictícios e cinco jogos.
+
+Com o banco iniciado e as migrações aplicadas, carregue os dados:
+
+```bash
+docker compose exec -T db psql -X -U nba -d nba_stats \
+  -v ON_ERROR_STOP=1 < testdata/demo.sql
+```
+
+A carga pode ser repetida sem duplicar os registros.
+
+Para conferir as quantidades e os resultados do time A:
+
+```bash
+docker compose exec -T db psql -X -U nba -d nba_stats \
+  -v ON_ERROR_STOP=1 < testdata/check_demo.sql
+```
+
+São esperados quatro times, cinco jogos e, para o time A,
+três jogos encerrados, duas vitórias e uma derrota.
