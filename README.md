@@ -2,7 +2,7 @@
 
 API de estatísticas de times e jogos da NBA, desenvolvida em Go.
 
-## Escopo planejado
+## Escopo
 
 - Listagem de times e jogos com filtros e paginação.
 - Resumo de desempenho por temporada e fase.
@@ -85,4 +85,27 @@ Para parar os containers mantendo os dados:
 
 ```bash
 docker compose down
+```
+
+## Migrações
+
+Usamos Goose para acompanhar as mudanças do banco.
+
+Instale a ferramenta na raiz do projeto:
+
+```bash
+mkdir -p bin
+GOBIN="$PWD/bin" go install github.com/pressly/goose/v3/cmd/goose@v3.27.3
+```
+
+Com o banco iniciado e o `.env` configurado, aplique as migrações:
+
+```bash
+./bin/goose up
+```
+
+Para conferir quais foram aplicadas:
+
+```bash
+./bin/goose status
 ```
