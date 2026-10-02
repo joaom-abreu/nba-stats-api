@@ -53,10 +53,11 @@ func run() error {
 	slog.Info("connected to PostgreSQL")
 
 	teamRepository := postgres.NewTeamRepository(pool)
+	gameRepository := postgres.NewGameRepository(pool)
 
 	server := &http.Server{
 		Addr:              ":8080",
-		Handler:           httpapi.NewHandler(pool.Ping, teamRepository),
+		Handler:           httpapi.NewHandler(pool.Ping, teamRepository, gameRepository),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

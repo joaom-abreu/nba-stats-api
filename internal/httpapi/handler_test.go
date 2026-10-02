@@ -7,8 +7,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"nba-stats-api/internal/httpapi"
 )
 
 func TestHealthEndpoints(t *testing.T) {
@@ -70,7 +68,7 @@ func TestHealthEndpoints(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			calls := 0
 
-			handler := httpapi.NewHandler(func(ctx context.Context) error {
+			handler := newTestHandler(func(ctx context.Context) error {
 				calls++
 				return tt.databaseErr
 			}, teamReaderStub{})
@@ -121,7 +119,7 @@ func TestHealthReadyUsesRequestContext(t *testing.T) {
 	var databaseErr error
 	var hasDeadline bool
 
-	handler := httpapi.NewHandler(func(ctx context.Context) error {
+	handler := newTestHandler(func(ctx context.Context) error {
 		_, hasDeadline = ctx.Deadline()
 		databaseErr = ctx.Err()
 		return databaseErr

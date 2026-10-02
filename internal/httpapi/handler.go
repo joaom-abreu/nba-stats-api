@@ -14,9 +14,14 @@ type TeamReader interface {
 	GetByID(context.Context, int64) (domain.Team, error)
 }
 
+type GameReader interface {
+	List(context.Context, domain.GameFilter) ([]domain.Game, error)
+}
+
 func NewHandler(
 	pingDatabase func(context.Context) error,
 	teams TeamReader,
+	games GameReader,
 ) http.Handler {
 	mux := http.NewServeMux()
 
@@ -36,6 +41,7 @@ func NewHandler(
 
 	mux.HandleFunc("GET /v1/teams", listTeamsHandler(teams.List))
 	mux.HandleFunc("GET /v1/teams/{id}", getTeamHandler(teams.GetByID))
+	mux.HandleFunc("GET /v1/games", listGamesHandler(games.List))
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {

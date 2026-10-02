@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"nba-stats-api/internal/domain"
-	"nba-stats-api/internal/httpapi"
 )
 
 func emptyTeamList(
@@ -22,7 +21,7 @@ func emptyTeamList(
 func newTeamTestHandler(
 	listTeams func(context.Context, domain.TeamFilter) ([]domain.Team, error),
 ) http.Handler {
-	return httpapi.NewHandler(
+	return newTestHandler(
 		func(context.Context) error { return nil },
 		teamReaderStub{list: listTeams},
 	)

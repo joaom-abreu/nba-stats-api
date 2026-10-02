@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"nba-stats-api/internal/domain"
-	"nba-stats-api/internal/httpapi"
 )
 
 func TestGetTeam(t *testing.T) {
@@ -102,7 +101,7 @@ func TestGetTeam(t *testing.T) {
 			var receivedID int64
 			calls := 0
 
-			handler := httpapi.NewHandler(
+			handler := newTestHandler(
 				func(context.Context) error { return nil },
 				teamReaderStub{
 					getByID: func(ctx context.Context, id int64) (domain.Team, error) {
