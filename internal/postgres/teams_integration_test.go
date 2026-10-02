@@ -4,6 +4,8 @@ package postgres_test
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,7 +13,7 @@ import (
 	"nba-stats-api/internal/postgres"
 )
 
-func TestTeamRepositoryList(t *testing.T) {
+func TestTeamRepository(t *testing.T) {
 	pool := openTestPool(t)
 
 	ctx, cancel := context.WithTimeout(
@@ -132,7 +134,7 @@ func TestTeamRepositoryList(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run("list/"+tt.name, func(t *testing.T) {
 			teams, err := repository.List(ctx, domain.TeamFilter{
 				Source:     tt.source,
 				Conference: tt.conference,
@@ -162,4 +164,29 @@ func TestTeamRepositoryList(t *testing.T) {
 			}
 		})
 	}
+
+	for _, want := range fixtures {
+		t.Run(fmt.Sprintf("get/%s/%d", want.Source, want.ID), func(t *testing.T) {
+			team, err := repository.GetByID(ctx, want.ID)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if team != want {
+				t.Fatalf("expected %+v, got %+v", want, team)
+			}
+		})
+	}
+
+	t.Run("get/not_found", func(t *testing.T) {
+		team, err := repository.GetByID(ctx, 999)
+
+		if !errors.Is(err, domain.ErrTeamNotFound) {
+			t.Fatalf("expected ErrTeamNotFound, got %v", err)
+		}
+
+		if team != (domain.Team{}) {
+			t.Fatalf("expected an empty team, got %+v", team)
+		}
+	})
 }

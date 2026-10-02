@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
@@ -11,6 +12,7 @@ import (
 
 type teamQuerier interface {
 	Query(context.Context, string, ...any) (pgx.Rows, error)
+	QueryRow(context.Context, string, ...any) pgx.Row
 }
 
 type TeamRepository struct {
@@ -71,4 +73,36 @@ func (r *TeamRepository) List(
 	}
 
 	return teams, nil
+}
+
+func (r *TeamRepository) GetByID(
+	ctx context.Context,
+	id int64,
+) (domain.Team, error) {
+	const query = `
+		SELECT id, source, external_id, name, abbreviation, conference
+		FROM teams
+		WHERE id = $1
+	`
+
+	var team domain.Team
+
+	err := r.db.QueryRow(ctx, query, id).Scan(
+		&team.ID,
+		&team.Source,
+		&team.ExternalID,
+		&team.Name,
+		&team.Abbreviation,
+		&team.Conference,
+	)
+
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.Team{}, domain.ErrTeamNotFound
+	}
+
+	if err != nil {
+		return domain.Team{}, fmt.Errorf("get team: %w", err)
+	}
+
+	return team, nil
 }

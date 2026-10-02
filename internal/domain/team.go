@@ -1,5 +1,9 @@
 package domain
 
+import "errors"
+
+var ErrTeamNotFound = errors.New("team not found")
+
 type Team struct {
 	ID           int64  `json:"id"`
 	Source       string `json:"source"`
