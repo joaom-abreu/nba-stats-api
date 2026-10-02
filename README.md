@@ -15,8 +15,7 @@ com a fase explicitada nas importações e consultas.
 
 ## Estado atual
 
-Servidor HTTP com endpoint de saúde e testes automatizados.
-
+Servidor HTTP com endpoint de saúde, validação de partidas e testes automatizados.
 ## Requisitos
 
 Go na versão indicada em `go.mod` ou superior.
