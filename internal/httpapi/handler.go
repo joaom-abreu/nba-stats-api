@@ -9,9 +9,14 @@ import (
 	"nba-stats-api/internal/domain"
 )
 
+type TeamReader interface {
+	List(context.Context, domain.TeamFilter) ([]domain.Team, error)
+	GetByID(context.Context, int64) (domain.Team, error)
+}
+
 func NewHandler(
 	pingDatabase func(context.Context) error,
-	listTeams func(context.Context, domain.TeamFilter) ([]domain.Team, error),
+	teams TeamReader,
 ) http.Handler {
 	mux := http.NewServeMux()
 
@@ -29,7 +34,8 @@ func NewHandler(
 		writeHealth(w, http.StatusOK, "ok")
 	})
 
-	mux.HandleFunc("GET /v1/teams", listTeamsHandler(listTeams))
+	mux.HandleFunc("GET /v1/teams", listTeamsHandler(teams.List))
+	mux.HandleFunc("GET /v1/teams/{id}", getTeamHandler(teams.GetByID))
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodGet && r.Method != http.MethodHead {

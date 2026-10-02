@@ -122,3 +122,70 @@ func parseTeamFilter(rawQuery string) (domain.TeamFilter, error) {
 
 	return filter, nil
 }
+
+func getTeamHandler(
+	getTeam func(context.Context, int64) (domain.Team, error),
+) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+		if err != nil || id < 1 {
+			writeError(
+				w, r,
+				http.StatusBadRequest,
+				"invalid_id",
+				"id must be a positive integer",
+			)
+			return
+		}
+
+		if r.URL.RawQuery != "" {
+			writeError(
+				w, r,
+				http.StatusBadRequest,
+				"invalid_query",
+				"this endpoint does not accept query parameters",
+			)
+			return
+		}
+
+		ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+		defer cancel()
+
+		team, err := getTeam(ctx, id)
+
+		if errors.Is(err, domain.ErrTeamNotFound) {
+			writeError(
+				w, r,
+				http.StatusNotFound,
+				"team_not_found",
+				"team not found",
+			)
+			return
+		}
+
+		if err != nil {
+			slog.Error(
+				"failed to get team",
+				"request_id", requestID(r),
+				"team_id", id,
+				"error", err,
+			)
+
+			writeError(
+				w, r,
+				http.StatusInternalServerError,
+				"internal_error",
+				"could not get team",
+			)
+			return
+		}
+
+		response := struct {
+			Data domain.Team `json:"data"`
+		}{
+			Data: team,
+		}
+
+		writeJSON(w, http.StatusOK, response)
+	}
+}

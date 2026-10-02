@@ -56,7 +56,7 @@ func run() error {
 
 	server := &http.Server{
 		Addr:              ":8080",
-		Handler:           httpapi.NewHandler(pool.Ping, teamRepository.List),
+		Handler:           httpapi.NewHandler(pool.Ping, teamRepository),
 		ReadHeaderTimeout: 5 * time.Second,
 	}
 

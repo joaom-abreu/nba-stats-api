@@ -24,7 +24,7 @@ func newTeamTestHandler(
 ) http.Handler {
 	return httpapi.NewHandler(
 		func(context.Context) error { return nil },
-		listTeams,
+		teamReaderStub{list: listTeams},
 	)
 }
 
