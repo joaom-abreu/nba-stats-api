@@ -53,3 +53,36 @@ go vet ./...
 
 - [Regras do projeto](docs/domain-rules.md)
 - [Como a API vai funcionar](docs/api-contract.md)
+
+## Banco de dados
+
+Requer Docker com Docker Compose.
+
+Na primeira execução, crie a configuração local:
+
+```bash
+cp .env.example .env
+```
+
+Para iniciar o PostgreSQL:
+
+```bash
+docker compose up -d --wait
+```
+
+O banco fica disponível em `127.0.0.1:5432`.
+As configurações estão no `.env`.
+
+Para abrir o terminal SQL:
+
+```bash
+docker compose exec db psql -U nba -d nba_stats
+```
+
+Use `\q` para sair.
+
+Para parar os containers mantendo os dados:
+
+```bash
+docker compose down
+```
