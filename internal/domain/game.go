@@ -3,6 +3,7 @@ package domain
 import (
 	"errors"
 	"fmt"
+	"time"
 )
 
 type GameStatus string
@@ -18,11 +19,19 @@ const (
 var ErrInvalidGame = errors.New("invalid game")
 
 type Game struct {
-	HomeTeamID int64
-	AwayTeamID int64
-	HomeScore  *int
-	AwayScore  *int
-	Status     GameStatus
+	ID          int64      `json:"id"`
+	Source      string     `json:"source"`
+	ExternalID  string     `json:"external_id"`
+	Season      int        `json:"season"`
+	Phase       string     `json:"phase"`
+	GameDate    string     `json:"game_date"`
+	StartTime   *time.Time `json:"start_time"`
+	HomeTeamID  int64      `json:"home_team_id"`
+	AwayTeamID  int64      `json:"away_team_id"`
+	HomeScore   *int       `json:"home_score"`
+	AwayScore   *int       `json:"away_score"`
+	Status      GameStatus `json:"status"`
+	CollectedAt time.Time  `json:"collected_at"`
 }
 
 // Validate checks the rules that can be verified from the game fields.
