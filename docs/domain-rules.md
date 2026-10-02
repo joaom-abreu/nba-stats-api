@@ -6,7 +6,95 @@ Este documento define o comportamento esperado da NBA Stats API.
 
 - A temporada é identificada pelo ano em que começa.
 - A temporada `2024` pode conter partidas realizadas em 2025.
-- A fase faz parte do recorte e não é deduzida pela data da partida.
+- A fase faz parte do recort# Regras do projeto
+
+## Dados
+
+- Vamos começar pela temporada 2024, que também inclui jogos de 2025.
+- A temporada e a fase precisam estar identificadas nos dados.
+- `demo` identifica os dados fictícios.
+- `balldontlie` identifica os dados reais.
+- Cada registro é identificado pela origem e pelo ID externo.
+- Importar o mesmo jogo novamente atualiza o registro existente.
+
+## Jogos
+
+Os estados possíveis são:
+
+- `scheduled`: agendado.
+- `in_progress`: em andamento.
+- `finished`: encerrado.
+- `postponed`: adiado.
+- `cancelled`: cancelado.
+
+Mandante e visitante precisam existir, ser diferentes e pertencer
+à mesma origem do jogo.
+
+Placares não podem ser negativos. Um placar ausente é `null`;
+zero é um placar válido.
+
+Um jogo encerrado precisa ter os dois placares e um vencedor.
+Estados desconhecidos e resultados inválidos devem ser registrados
+como rejeições na importação.
+
+## Estatísticas
+
+Só jogos encerrados e válidos entram nas estatísticas.
+
+- Aproveitamento = vitórias / jogos.
+- Média de pontos = soma dos pontos / jogos.
+- Saldo médio = média de pontos feitos - média de pontos sofridos.
+- Aproveitamento é uma fração: `0.6` significa 60%.
+- Casa e fora são calculados separadamente.
+
+Sem jogos, os contadores são zero e as médias e o aproveitamento
+são `null`.
+
+As consultas informam a origem, a temporada, a fase, as datas,
+a quantidade de jogos e a última coleta disponível.
+Os resultados representam os dados importados.
+
+Os filtros de data incluem os dois limites.
+Horários, quando disponíveis, são retornados em UTC.
+
+## Últimos jogos
+
+Selecionamos até 5 ou 10 jogos encerrados dentro do recorte.
+O padrão é 5.
+
+A ordem é da data mais recente para a mais antiga.
+Em datas iguais, usamos o ID local decrescente.
+
+Se houver apenas 3 jogos, as médias usam esses 3.
+
+## Exemplo para conferir os cálculos
+
+Dados fictícios do time A, na temporada 2024 e fase regular.
+Os placares abaixo estão do ponto de vista de A.
+
+| ID | Data | Local | Placar de A | Estado |
+|---|---|---|---|---|
+| 101 | 2025-01-02 | Casa | 110–100 | Encerrado |
+| 102 | 2025-01-04 | Fora | 90–105 | Encerrado |
+| 103 | 2025-01-06 | Casa | 100–95 | Encerrado |
+| 104 | 2025-01-08 | Casa | Ausente | Agendado |
+| 105 | 2025-01-10 | Fora | 62–60 | Em andamento |
+
+Resultado esperado:
+
+- 3 jogos, 2 vitórias e 1 derrota.
+- Aproveitamento: 2/3.
+- Média de pontos feitos: 100.
+- Média de pontos sofridos: 100.
+- Em casa: médias de 105 feitos e 97.5 sofridos.
+- Fora: médias de 90 feitos e 105 sofridos.
+- Últimos jogos: 103, 102 e 101.
+
+Entre 4 e 6 de janeiro, entram os jogos 102 e 103:
+1 vitória, 1 derrota, média de 95 feitos e 100 sofridos.
+
+Entre 8 e 10 de janeiro, não há jogos encerrados:
+contadores zero e médias e aproveitamento `null`.e e não é deduzida pela data da partida.
 - O primeiro recorte real planejado é a temporada `2024`,
   na fase `regular_season`.
 - A classificação da fase deve ser validada no adaptador da fonte.

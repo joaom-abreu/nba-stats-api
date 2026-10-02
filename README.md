@@ -51,4 +51,5 @@ go vet ./...
 
 ## Documentação
 
-- [Regras de domínio e métricas](docs/domain-rules.md)
+- [Regras do projeto](docs/domain-rules.md)
+- [Como a API vai funcionar](docs/api-contract.md)
